@@ -23,6 +23,7 @@ import java.io.IOException;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.RawComparator;
 import org.apache.hadoop.io.compress.CompressionCodec;
+import org.apache.hadoop.util.TaskResourceUsageCalculator;
 
 /** 
  * Maps input key/value pairs to a set of intermediate key/value pairs.  
@@ -93,7 +94,6 @@ import org.apache.hadoop.io.compress.CompressionCodec;
  * @see Reducer
  */
 public class Mapper<KEYIN, VALUEIN, KEYOUT, VALUEOUT> {
-
   public class Context 
     extends MapContext<KEYIN,VALUEIN,KEYOUT,VALUEOUT> {
     public Context(Configuration conf, TaskAttemptID taskid,
@@ -139,10 +139,14 @@ public class Mapper<KEYIN, VALUEIN, KEYOUT, VALUEOUT> {
    * @throws IOException
    */
   public void run(Context context) throws IOException, InterruptedException {
+    TaskResourceUsageCalculator truc = new TaskResourceUsageCalculator("mapper");
     setup(context);
     while (context.nextKeyValue()) {
+      truc.record();
       map(context.getCurrentKey(), context.getCurrentValue(), context);
+      truc.record();
     }
     cleanup(context);
+    truc.log();
   }
 }

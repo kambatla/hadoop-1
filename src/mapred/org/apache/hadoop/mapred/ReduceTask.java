@@ -82,6 +82,7 @@ import org.apache.hadoop.util.Progress;
 import org.apache.hadoop.util.Progressable;
 import org.apache.hadoop.util.ReflectionUtils;
 import org.apache.hadoop.util.StringUtils;
+import org.apache.hadoop.util.TaskResourceUsageCalculator;
 
 import org.apache.hadoop.mapred.FileOutputFormat;
 import org.apache.hadoop.mapreduce.security.SecureShuffleUtils;
@@ -501,6 +502,8 @@ class ReduceTask extends Task {
         }
       };
     
+    TaskResourceUsageCalculator truc = new TaskResourceUsageCalculator(
+        "reducer");
     // apply reduce function
     try {
       //increment processed counter only if skipping feature is enabled
@@ -517,7 +520,9 @@ class ReduceTask extends Task {
       values.informReduceProgress();
       while (values.more()) {
         reduceInputKeyCounter.increment(1);
+        truc.record();
         reducer.reduce(values.getKey(), values, collector, reporter);
+        truc.record();
         if(incrProcCount) {
           reporter.incrCounter(SkipBadRecords.COUNTER_GROUP, 
               SkipBadRecords.COUNTER_REDUCE_PROCESSED_GROUPS, 1);
@@ -525,6 +530,7 @@ class ReduceTask extends Task {
         values.nextKey();
         values.informReduceProgress();
       }
+      truc.log();
 
       //Clean up: repeated in catch block below
       reducer.close();

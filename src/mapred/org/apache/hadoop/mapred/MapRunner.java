@@ -21,6 +21,7 @@ package org.apache.hadoop.mapred;
 import java.io.IOException;
 
 import org.apache.hadoop.util.ReflectionUtils;
+import org.apache.hadoop.util.TaskResourceUsageCalculator;
 
 /** Default {@link MapRunnable} implementation.*/
 public class MapRunner<K1, V1, K2, V2>
@@ -40,14 +41,17 @@ public class MapRunner<K1, V1, K2, V2>
   public void run(RecordReader<K1, V1> input, OutputCollector<K2, V2> output,
                   Reporter reporter)
     throws IOException {
+    TaskResourceUsageCalculator truc = new TaskResourceUsageCalculator("mapper");
     try {
       // allocate key & value instances that are re-used for all entries
       K1 key = input.createKey();
       V1 value = input.createValue();
       
       while (input.next(key, value)) {
+        truc.record();
         // map pair to output
         mapper.map(key, value, output, reporter);
+        truc.record();
         if(incrProcCount) {
           reporter.incrCounter(SkipBadRecords.COUNTER_GROUP, 
               SkipBadRecords.COUNTER_MAP_PROCESSED_RECORDS, 1);
@@ -56,6 +60,7 @@ public class MapRunner<K1, V1, K2, V2>
     } finally {
       mapper.close();
     }
+    truc.log();
   }
 
   protected Mapper<K1, V1, K2, V2> getMapper() {

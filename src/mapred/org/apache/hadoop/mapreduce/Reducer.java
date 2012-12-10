@@ -23,6 +23,7 @@ import java.io.IOException;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.RawComparator;
 import org.apache.hadoop.mapred.RawKeyValueIterator;
+import org.apache.hadoop.util.TaskResourceUsageCalculator;
 
 /** 
  * Reduces a set of intermediate values which share a key to a smaller set of
@@ -171,10 +172,15 @@ public class Reducer<KEYIN,VALUEIN,KEYOUT,VALUEOUT> {
    * control how the reduce task works.
    */
   public void run(Context context) throws IOException, InterruptedException {
+    TaskResourceUsageCalculator truc = new TaskResourceUsageCalculator(
+        "reducer");
     setup(context);
     while (context.nextKey()) {
+      truc.record();
       reduce(context.getCurrentKey(), context.getValues(), context);
+      truc.record();
     }
     cleanup(context);
+    truc.log();
   }
 }
