@@ -11,7 +11,8 @@ public class TaskResourceUsageCalculator {
   private double meanMemoryUsed = -1;
 
   public TaskResourceUsageCalculator(String logname) {
-    log = LogFactory.getLog(logname);
+    log = LogFactory.getLog(TaskResourceUsageCalculator.class.getName() + " "
+        + logname);
     runtime = Runtime.getRuntime();
     minMemoryUsed = Long.MAX_VALUE;
     maxMemoryUsed = Long.MIN_VALUE;
@@ -31,8 +32,8 @@ public class TaskResourceUsageCalculator {
   }
 
   public void log() {
-    log.info("Min memory = " + minMemoryUsed);
-    log.info("Max memory = " + maxMemoryUsed);
-    log.info("Mean memory = " + meanMemoryUsed);
+    String logMessage = "Min, max, and mean memory usage of task " + ": "
+        + minMemoryUsed + " " + maxMemoryUsed + " " + meanMemoryUsed;
+    log.info(logMessage);
   }
 }
